@@ -36,7 +36,8 @@ class AuditLog(models.Model):
     statement_only = models.TextField()
 
     app_name = models.TextField()
-    app_user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    app_user_model = models.TextField()
+    app_user_pk = models.BigIntegerField(db_index=True)
     app_user_ip_address = models.GenericIPAddressField()
 
     def save(self, *args, **kwargs):

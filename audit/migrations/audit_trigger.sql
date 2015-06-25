@@ -163,7 +163,8 @@ DECLARE
   -- trigger is either a row-level or statement-level trigger
 
   app_name            TEXT;
-  app_user_id         INTEGER;
+  app_user_model      TEXT;
+  app_user_pk         INTEGER;
   app_user_ip_address INET;
 
 BEGIN
@@ -177,7 +178,8 @@ BEGIN
   -- seem to be any way to test existence.
   BEGIN
     SELECT INTO app_name CURRENT_SETTING('app_name');
-    SELECT INTO app_user_id CURRENT_SETTING('app_user_id');
+    SELECT INTO app_user_model CURRENT_SETTING('app_user_model');
+    SELECT INTO app_user_pk CURRENT_SETTING('app_user_pk');
     SELECT INTO app_user_ip_address CURRENT_SETTING('app_user_ip_address');
     EXCEPTION WHEN OTHERS THEN
   END;
@@ -241,7 +243,8 @@ BEGIN
     "statement_only",
 
     "app_name",
-    "app_user_id",
+    "app_user_model",
+    "app_user_pk",
     "app_user_ip_address"
 
   ) VALUES (
@@ -264,7 +267,8 @@ BEGIN
     'f', -- statement_only
 
     app_name,
-    app_user_id,
+    app_user_model,
+    app_user_pk,
     app_user_ip_address
   );
 
