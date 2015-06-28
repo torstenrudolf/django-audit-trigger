@@ -21,38 +21,27 @@ class SystemRegistryMetaClass(type):
 
 class SystemRegistry(metaclass=SystemRegistryMetaClass):
     _user = None
-    _user_model = None
     _user_ip_address = None
 
     def __new__(cls, *args, **kwargs):
         raise Exception('Do not instanciate the SystemRegistry, but use the class.')
 
-    @property
-    def user(self):
-        assert self._user
-        return self._user
+    @classmethod
+    def user(cls):
+        """:rtype: django.contrib.auth.models.User"""
+        return cls._user
 
-    @user.setter
-    def user(self, user):
-        self._user = user
+    @classmethod
+    def user_pk_or_none_if_anonymous(cls):
+        return (cls.user().is_authenticated() and cls.user().pk) or None
 
-    @property
-    def user_model(self):
-        assert self._user_model
-        return self._user_model
+    @classmethod
+    def user_model_or_none_if_anonymous(cls):
+        return '{0.app_label}.{0.model_name}'.format(cls.user()._meta)
 
-    @user_model.setter
-    def user_model(self, user_model):
-        self._user_model = user_model
-
-    @property
-    def user_ip_address(self):
-        assert self._user_ip_address
-        return self._user_ip_address
-
-    @user_ip_address.setter
-    def user_ip_address(self, user_ip_address):
-        self._user_ip_address = user_ip_address
+    @classmethod
+    def user_ip_address(cls):
+        return cls._user_ip_address
 
     @classmethod
     def _update_postgres_runtime_parameters(cls):
@@ -60,18 +49,18 @@ class SystemRegistry(metaclass=SystemRegistryMetaClass):
         set the audit relevant parameters as postgres runtime variables
         """
         connection.cursor().execute(
-            "SET app_name = 'django';"
-            "SET app_user_pk = %(user_pk)s;"
-            "SET app_user_model = %(user_model)s;"
-            "SET app_user_ip_address = %(user_ip_address)s;",
-            {'user_pk': cls.user.pk,
-             'user_model': '{0.app_label}.{0.model_name}'.format(cls.user._meta),
-             'user_ip_address': cls.user_ip_address})
+            "SET app.name = 'django';"
+            "SET app.user_pk = %(user_pk)s;"
+            "SET app.user_model = %(user_model)s;"
+            "SET app.user_ip_address = %(user_ip_address)s;",
+            {'user_pk': cls.user_pk_or_none_if_anonymous(),
+             'user_model': cls.user_model_or_none_if_anonymous(),
+             'user_ip_address': cls.user_ip_address()})
 
     @classmethod
     def set_user_information_and_update_postgres_runtime_parameters(cls, user, user_ip_address):
-        cls.user = user
-        cls.user_ip_address = user_ip_address
+        cls._user = user
+        cls._user_ip_address = user_ip_address
         cls._update_postgres_runtime_parameters()
 
 
@@ -81,5 +70,4 @@ class AuditMiddleWare(object):
         put the current user information into the system registry
         """
         SystemRegistry.set_user_information_and_update_postgres_runtime_parameters(
-            request.user,
-            get_ip_address_from_request(request))
+            request.user, get_ip_address_from_request(request))

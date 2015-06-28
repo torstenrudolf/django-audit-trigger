@@ -177,10 +177,10 @@ BEGIN
   -- We need to do this in a transaction, as there doesn't
   -- seem to be any way to test existence.
   BEGIN
-    SELECT INTO app_name CURRENT_SETTING('app_name');
-    SELECT INTO app_user_model CURRENT_SETTING('app_user_model');
-    SELECT INTO app_user_pk CURRENT_SETTING('app_user_pk');
-    SELECT INTO app_user_ip_address CURRENT_SETTING('app_user_ip_address');
+    SELECT INTO app_name CURRENT_SETTING('app.name');
+    SELECT INTO app_user_model CURRENT_SETTING('app.user_model');
+    SELECT INTO app_user_pk CURRENT_SETTING('app.user_pk');
+    SELECT INTO app_user_ip_address CURRENT_SETTING('app.user_ip_address');
     EXCEPTION WHEN OTHERS THEN
   END;
 
