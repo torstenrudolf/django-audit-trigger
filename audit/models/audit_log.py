@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 import django.contrib.postgres.fields
 
 
@@ -11,12 +10,27 @@ class OIDField(models.IntegerField):
         return 'oid'
 
 
+class AuditLogQuerySet(models.query.QuerySet):
+    def for_model_class(self, model_class):
+        return self.filter(db_table_name=model_class._meta.db_table)
+
+    def for_model_instance(self, model_instance):
+        return self.for_model_class(type(model_instance)).filter(
+            **{'row_data__'+model_instance._meta.pk.name: model_instance.pk})
+
+    def where_field_has_changed(self, field_name):
+        return self.filter(changed_fields__has_key=field_name)
+
+
+
 class AuditLog(models.Model):
     """
     Stores the audit logs.
 
     Holds information which row/table has changed as well as the changeset.
     """
+    objects = models.Manager.from_queryset(AuditLogQuerySet)()
+
     db_schema_name = models.TextField()
     db_table_name = models.TextField()
     db_relid = OIDField(db_index=True, help_text='the object ID of the table that caused the trigger invocation')
@@ -42,3 +56,7 @@ class AuditLog(models.Model):
 
     def save(self, *args, **kwargs):
         raise NotImplementedError('This table is readonly.')
+    #
+    # @property
+    # def user(self):
+    #     if self.app_user_model
